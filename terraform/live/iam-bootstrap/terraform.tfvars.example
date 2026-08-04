@@ -1,0 +1,18 @@
+# ── Target accounts ───────────────────────────────────────────────────────────
+target_accounts = {
+  security = "247338422836"
+}
+
+# ── OIDC provider ARNs (must already exist in each account) ───────────────────
+oidc_provider_arn_by_account = {
+  security = "arn:aws:iam::247338422836:oidc-provider/token.actions.githubusercontent.com"
+}
+
+# ── OIDC subjects – only this repo + branch may assume either role ────────────
+oidc_subjects = [
+  "repo:my-org/infra:ref:refs/heads/main",
+]
+
+# Optional overrides (defaults shown)
+# bootstrap_role_name = "cicd-bootstrap"
+# terraform_role_name = "terraform-execution"
