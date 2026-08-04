@@ -1,0 +1,12 @@
+terraform_execution_role_arn = "arn:aws:iam::247338422836:role/terraform-execution"
+
+vpc_id             = "vpc-xxxxxxxxxxxxxxxxx"
+public_subnet_ids  = ["subnet-aaa", "subnet-bbb"]
+private_subnet_ids = ["subnet-ccc", "subnet-ddd"]
+
+ami_id          = "ami-xxxxxxxxxxxxxxxxx"   # Amazon Linux 2 with GitLab EE/CE pre-installed
+certificate_arn = "arn:aws:acm:us-east-1:247338422836:certificate/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+alarm_email     = "<ops-team@example.com>"
+
+# Supply via TF_VAR_db_password env var — never commit this value
+# db_password = "..."

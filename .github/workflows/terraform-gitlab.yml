@@ -1,0 +1,71 @@
+name: terraform-gitlab
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "terraform/live/gitlab/**"
+      - "terraform/modules/gitlab-resilience/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "terraform/live/gitlab/**"
+      - "terraform/modules/gitlab-resilience/**"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  TF_WORKING_DIR: terraform/live/gitlab
+  AWS_REGION: us-east-1
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production' || 'preview' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Step 1 — GitHub OIDC token → cicd-bootstrap
+      - name: Configure AWS credentials (bootstrap)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::247338422836:role/cicd-bootstrap
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: github-oidc-bootstrap
+
+      # Step 2 — bootstrap → terraform-execution (role chaining)
+      - name: Assume terraform-execution role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::247338422836:role/terraform-execution
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: terraform-gitlab
+          role-chaining: true
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~> 1.8"
+
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        env:
+          TF_VAR_db_password: ${{ secrets.GITLAB_DB_PASSWORD }}
+        run: terraform plan -out=tfplan
+
+      - name: Terraform Apply
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        env:
+          TF_VAR_db_password: ${{ secrets.GITLAB_DB_PASSWORD }}
+        run: terraform apply -auto-approve tfplan
