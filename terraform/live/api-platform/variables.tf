@@ -7,7 +7,7 @@ variable "name" {
 variable "region" {
   description = "Primary AWS region."
   type        = string
-  default     = "eu-central-1"
+  default     = "us-east-1"
 }
 
 variable "terraform_execution_role_arn" {
