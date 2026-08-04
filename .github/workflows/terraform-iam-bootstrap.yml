@@ -1,0 +1,69 @@
+name: terraform-iam-bootstrap
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "terraform/live/iam-bootstrap/**"
+      - "terraform/modules/iam-terraform-role/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "terraform/live/iam-bootstrap/**"
+      - "terraform/modules/iam-terraform-role/**"
+
+permissions:
+  id-token: write   # required for OIDC token issuance
+  contents: read
+
+env:
+  TF_WORKING_DIR: terraform/live/iam-bootstrap
+  AWS_REGION: us-east-1
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production' || 'preview' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Step 1: Exchange GitHub OIDC token for the cicd-bootstrap role ───────
+      # This is the only credential in the pipeline — no static keys anywhere.
+      - name: Configure AWS credentials (bootstrap)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.BOOTSTRAP_ROLE_ARN }}   # e.g. arn:aws:iam::MGMT_ACCOUNT:role/cicd-bootstrap
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: github-oidc-bootstrap
+
+      # ── Step 2: Assume the terraform-execution role via the bootstrap role ───
+      - name: Assume terraform-execution role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.TERRAFORM_EXECUTION_ROLE_ARN }}   # e.g. arn:aws:iam::SECURITY_ACCOUNT:role/terraform-execution
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: terraform-execution
+          role-chaining: true   # chains on top of the bootstrap session
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~> 1.8"
+
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform plan -out=tfplan
+
+      # Apply only on push to main
+      - name: Terraform Apply
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform apply -auto-approve tfplan

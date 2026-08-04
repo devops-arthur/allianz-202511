@@ -1,0 +1,62 @@
+region                       = "eu-central-1"
+terraform_execution_role_arn = "arn:aws:iam::111111111111:role/terraform-encryption-admin"
+
+# Security account: 111111111111
+workload_accounts = {
+  dev  = "222222222222"
+  int  = "333333333333"
+  prod = "444444444444"
+}
+
+services = ["s3", "rds", "ddb"]
+
+key_admin_role_arns = [
+  "arn:aws:iam::111111111111:role/KeyAdministrator",
+]
+
+key_material_importer_role_arns = [
+  "arn:aws:iam::111111111111:role/KeyCeremonyOperator",
+]
+
+break_glass_role_arns = [
+  "arn:aws:iam::111111111111:role/KeyBreakGlass",
+]
+
+auditor_role_arns = [
+  "arn:aws:iam::111111111111:role/SecurityAudit",
+  "arn:aws:iam::111111111111:role/aws-service-role/config.amazonaws.com/AWSServiceRoleForConfig",
+]
+
+# Prod keys are restricted to named roles instead of the whole account.
+restrict_prod_to_principals = ["prod"]
+
+environment_principal_arns = {
+  prod = [
+    "arn:aws:iam::444444444444:role/app-runtime",
+    "arn:aws:iam::444444444444:role/data-platform",
+    "arn:aws:iam::444444444444:role/terraform-workload",
+    "arn:aws:iam::444444444444:role/config-rule-kms-rotation-compliance",
+  ]
+}
+
+# --------------------------------------------------------------------------------------------------
+# Rotation state. This map IS the rotation: bump current_generation, keep the old one retained so
+# existing ciphertext stays readable, apply, run the ceremony for the new key, then re-encrypt data.
+# --------------------------------------------------------------------------------------------------
+key_rotation_state = {
+  # Example of a key that has been rotated once.
+  "prod-s3" = {
+    current_generation   = 2
+    retained_generations = [1]
+  }
+
+  # Everything else is still on its initial generation (this is also the default).
+  "prod-rds" = { current_generation = 1 }
+  "prod-ddb" = { current_generation = 1 }
+}
+
+# Only set an expiration once the re-import pipeline is proven - expired material means every
+# ciphertext under that key becomes undecryptable until the same material is re-imported.
+# key_material_valid_to = {
+#   "dev-s3" = "2027-01-31T23:59:59Z"
+# }
