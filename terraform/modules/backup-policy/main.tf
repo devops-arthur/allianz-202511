@@ -103,7 +103,7 @@ resource "aws_backup_plan" "main" {
       for_each = var.copy_to_region != null ? [1] : []
       content {
         destination_vault_arn = var.copy_vault_arn
-        lifecycle { delete_after = var.monthly_delete_after_days }
+        lifecycle { delete_after = var.copy_delete_after_days }
       }
     }
 
@@ -111,7 +111,7 @@ resource "aws_backup_plan" "main" {
       for_each = var.cross_account_vault_arn != null ? [1] : []
       content {
         destination_vault_arn = var.cross_account_vault_arn
-        lifecycle { delete_after = var.monthly_delete_after_days }
+        lifecycle { delete_after = var.cross_account_delete_after_days }
       }
     }
   }

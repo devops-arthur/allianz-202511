@@ -36,7 +36,7 @@ module "backup_prod" {
   kms_key_arn = var.kms_key_arns["prod"]
   owner_tag   = var.owner_tag
 
-  # Prod: tighter retention and mandatory cross-region + cross-account copies
+  # Prod: tighter retention and optional cross-region + cross-account copies (enabled when vars are provided)
   daily_delete_after_days   = 35
   monthly_delete_after_days = 365
   copy_to_region            = var.copy_to_region

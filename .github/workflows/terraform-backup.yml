@@ -31,14 +31,14 @@ jobs:
       - name: Configure AWS credentials (bootstrap)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::247338422836:role/cicd-bootstrap
+          role-to-assume: ${{ vars.BOOTSTRAP_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: github-oidc-bootstrap
 
       - name: Assume terraform-execution role
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::247338422836:role/terraform-execution
+          role-to-assume: ${{ vars.TERRAFORM_EXECUTION_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: terraform-backup
           role-chaining: true

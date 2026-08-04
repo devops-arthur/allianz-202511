@@ -60,6 +60,11 @@ variable "copy_vault_arn" {
   description = "ARN of the destination vault in var.copy_to_region. Required when copy_to_region is set."
   type        = string
   default     = null
+
+  validation {
+    condition     = var.copy_to_region == null || var.copy_vault_arn != null
+    error_message = "copy_vault_arn must be set when copy_to_region is provided."
+  }
 }
 
 variable "copy_delete_after_days" {

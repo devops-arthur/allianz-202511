@@ -269,6 +269,8 @@ No `AWS_ACCESS_KEY_ID` or `AWS_SECRET_ACCESS_KEY` secrets are used.
 | Name | Type | Used by |
 |---|---|---|
 | `GITLAB_DB_PASSWORD` | Secret | `terraform-gitlab.yml` |
+| `BOOTSTRAP_ROLE_ARN` | Variable | `terraform-iam-bootstrap.yml`, `terraform-backup.yml` |
+| `TERRAFORM_EXECUTION_ROLE_ARN` | Variable | `terraform-iam-bootstrap.yml`, `terraform-backup.yml` |
 
-All role ARNs are hardcoded in the workflows using account `247338422836`.
-Update them if deploying to a different account.
+`terraform-gitlab.yml` hardcodes role ARNs using account `247338422836`.
+Update it if deploying to a different account.
