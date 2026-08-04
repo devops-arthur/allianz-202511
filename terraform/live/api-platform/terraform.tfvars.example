@@ -1,0 +1,74 @@
+terraform_execution_role_arn = "arn:aws:iam::111111111111:role/terraform-api-platform-admin"
+region                       = "eu-central-1"
+
+public_domain_name             = "api.allianz-trade.com"
+cloudfront_acm_certificate_arn = "arn:aws:acm:us-east-1:111111111111:certificate/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+cloudfront_price_class         = "PriceClass_100"
+cloudfront_origin_shield_region = "eu-central-1"
+public_hosted_zone_id          = "ZXXXXXXXXXXXXX"
+cloudfront_access_log_bucket   = "allianz-trade-cloudfront-logs.s3.amazonaws.com"
+cloudfront_default_origin_id   = "payments"
+
+# Path-based routing: each path prefix routes to the owning team's API Gateway.
+cloudfront_path_behaviors = [
+  { path_pattern = "/payments/*", origin_id = "payments" },
+  { path_pattern = "/claims/*",   origin_id = "claims"   },
+  { path_pattern = "/partners/*", origin_id = "partners" },
+]
+
+# Public (Regional) API Gateways — one per team.
+# origin_verify_secret must be a random string; store it in Secrets Manager and
+# retrieve it via data source or pass it through CI/CD secrets injection.
+public_apis = {
+  payments = {
+    description          = "Payments team public API"
+    stage_name           = "v1"
+    origin_verify_secret = "CHANGE_ME_payments_secret"
+    custom_domain_name   = "payments-origin.api.allianz-trade.com"
+    acm_certificate_arn  = "arn:aws:acm:eu-central-1:111111111111:certificate/yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy"
+    base_path            = "payments"
+    rate_limit           = 2000
+  }
+  claims = {
+    description          = "Claims team public API"
+    stage_name           = "v1"
+    origin_verify_secret = "CHANGE_ME_claims_secret"
+    custom_domain_name   = "claims-origin.api.allianz-trade.com"
+    acm_certificate_arn  = "arn:aws:acm:eu-central-1:111111111111:certificate/zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz"
+    base_path            = "claims"
+    rate_limit           = 1500
+  }
+  partners = {
+    description          = "Partner integration public API"
+    stage_name           = "v1"
+    origin_verify_secret = "CHANGE_ME_partners_secret"
+    custom_domain_name   = "partners-origin.api.allianz-trade.com"
+    acm_certificate_arn  = "arn:aws:acm:eu-central-1:111111111111:certificate/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    base_path            = "partners"
+  }
+}
+
+# Private (VPC-only) API Gateways — no internet exposure.
+private_apis = {
+  internal-claims = {
+    description            = "Claims internal API — VPC only"
+    stage_name             = "v1"
+    vpc_id                 = "vpc-0123456789abcdef0"
+    subnet_ids             = ["subnet-aaa111", "subnet-bbb222"]
+    vpc_cidr_blocks        = ["10.0.0.0/16"]
+    private_hosted_zone_id = "ZYYYYYYYYYYYYY"
+    private_dns_name       = "internal-api.allianz-trade.com"
+  }
+}
+
+# WAF
+waf_cloudfront_rate_limit = 5000
+waf_regional_rate_limit   = 2000
+waf_blocked_countries     = []
+# waf_log_destination_arn = "arn:aws:s3:::allianz-trade-waf-logs"
+
+# Observability
+log_retention_in_days    = 365
+waf_block_alarm_threshold = 500
+api_5xx_alarm_threshold  = 50
+# alarm_sns_topic_arns   = ["arn:aws:sns:eu-central-1:111111111111:api-platform-alerts"]
