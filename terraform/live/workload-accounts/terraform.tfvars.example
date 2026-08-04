@@ -1,0 +1,38 @@
+region = "eu-central-1"
+
+# Security account that owns the KMS keys (must match the security-keys root module).
+key_account_id = "111111111111"
+
+# Workload accounts - must match workload_accounts in the security-keys root module.
+workload_accounts = {
+  dev  = "222222222222"
+  int  = "333333333333"
+  prod = "444444444444"
+}
+
+# Terraform assumes this role (by name) in every workload account.
+terraform_execution_role_name = "terraform-workload-admin"
+
+# Central S3 bucket (owned by the security account) that Config delivers to.
+config_delivery_bucket_name = "allianz-config-delivery-111111111111"
+
+# Only record the resource types relevant to the encryption compliance rules - cheaper than
+# recording everything and sufficient for this use case.
+record_all_supported_resources = false
+
+# Compliance rule configuration. rule_name and compliance_role_name must be consistent with
+# the rotation_compliance_role_name variable in the security-keys root module.
+rule_name            = "kms-encrypted-with-current-key-generation"
+compliance_role_name = "config-rule-kms-rotation-compliance"
+evaluation_frequency = "TwentyFour_Hours"
+
+# Send EventBridge/SNS alerts whenever a resource becomes NON_COMPLIANT.
+notify_on_compliance_change = true
+
+# Optionally wire NON_COMPLIANT alerts into an existing SNS topic (e.g. a Security Hub aggregator)
+# instead of creating a new one per account.
+# notification_topic_arns = {
+#   dev  = "arn:aws:sns:eu-central-1:222222222222:security-alerts"
+#   int  = "arn:aws:sns:eu-central-1:333333333333:security-alerts"
+#   prod = "arn:aws:sns:eu-central-1:444444444444:security-alerts"
+# }
