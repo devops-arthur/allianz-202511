@@ -1,0 +1,26 @@
+workload_accounts = {
+  dev  = "222222222222"
+  int  = "333333333333"
+  prod = "444444444444"
+}
+
+kms_key_arns = {
+  dev  = "arn:aws:kms:us-east-1:222222222222:key/<dev-key-id>"
+  int  = "arn:aws:kms:us-east-1:333333333333:key/<int-key-id>"
+  prod = "arn:aws:kms:us-east-1:444444444444:key/<prod-key-id>"
+}
+
+# Cross-region copies to us-west-2
+copy_to_region = "us-west-2"
+copy_vault_arns = {
+  dev  = "arn:aws:backup:us-west-2:222222222222:backup-vault:dev-vault-dr"
+  int  = "arn:aws:backup:us-west-2:333333333333:backup-vault:int-vault-dr"
+  prod = "arn:aws:backup:us-west-2:444444444444:backup-vault:prod-vault-dr"
+}
+
+# Cross-account copies to central DR account
+cross_account_vault_arns = {
+  dev  = "arn:aws:backup:us-east-1:555555555555:backup-vault:central-dr-dev"
+  int  = "arn:aws:backup:us-east-1:555555555555:backup-vault:central-dr-int"
+  prod = "arn:aws:backup:us-east-1:555555555555:backup-vault:central-dr-prod"
+}
